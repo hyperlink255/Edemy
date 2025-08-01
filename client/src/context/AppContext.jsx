@@ -10,6 +10,7 @@ export const AppContextProvider = ({children}) => {
     const navigate = useNavigate()
 
     const [allCourses,setAllCourses] = useState([])
+    const [showModal, setShowModal] = useState(false);
     const [isEducator,setIsEducator] = useState(false)
     const [enrolledCourses,setEnrolledCourses] = useState([])
 
@@ -66,6 +67,7 @@ export const AppContextProvider = ({children}) => {
     const value = {
      currency,
      allCourses,navigate,calculateRating,
+     showModal, setShowModal,
      isEducator,setIsEducator,calculateChapterTime,
      calculateCourseDuraton,calculateNoOfLectures,enrolledCourses,fetchUserEnrolledCourses
     }
