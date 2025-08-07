@@ -4,7 +4,9 @@ import { AppContext } from '../../context/AppContext'
 import Loading from '../../components/student/Loading'
 import { assets } from '../../assets/LMS_assets/assets/assets'
 import humanizeDuration from 'humanize-duration'
+import instance from '../../utils/axiosInstance'
 import YouTube from 'react-youtube'
+import toast from 'react-hot-toast'
 
 const CourseDetails = () => {
   const { id } = useParams()
@@ -15,15 +17,53 @@ const CourseDetails = () => {
 
 
   const { allCourses, calculateRating,calculateChapterTime,
-     calculateCourseDuraton,calculateNoOfLectures,currency} = useContext(AppContext)
+     calculateCourseDuraton,calculateNoOfLectures,currency,userData} = useContext(AppContext)
 
   const fetchCourseData = async () => {
-    const findCourse = allCourses.find(course => course._id === id)
-    setCourseData(findCourse)
+    try{
+       const res = await instance.get(`/api/course/${id}`)
+       if(res.status === 200){
+        setCourseData(res.data.courseData)
+       }else{
+        toast.error(res.data.message)
+       }
+    }catch(error){
+        toast.error(error.message)
+
+    }
   }
+
+  const enrollCourse = async () => {
+      try{
+         if(!userData){
+          return toast.error("Login to Eroll")
+         }
+         if(isAlreadyEnrolled){
+          return toast.error("Already Enrolled")
+         }
+         const res = await instance.post('/api/auth/purchase',{courseId:courseData._id})
+         if(res.status === 200){
+          window.location.replace(res.data.session_url)
+         }else{
+          toast.error(res.data.message)
+         }
+      }catch(error){
+         toast.error(error.message)
+      }
+  }
+
   useEffect(() => {
     fetchCourseData()
-  }, [allCourses])
+  }, [])
+
+  useEffect(() => {
+    if(userData && courseData){
+  
+      setIsAlreadyEnrolled(userData.enrolledCourses?.includes(courseData._id))
+    }
+  }, [userData,courseData])
+  
+
 
   const toggleSection = (index) => {
     setOpenSections((prev) => (
@@ -51,7 +91,7 @@ const CourseDetails = () => {
             <p className='text-blue-500'>({courseData.courseRatings.length} {courseData.length > 1 ? 'ratings' : 'rating'})</p>
             <p>{courseData.enrolledStudents.length} {courseData.enrolledStudents.length > 1 ? 'students' : 'student'}</p>
           </div>
-          <p className='text-shadow-amber-200'>Course by <span className='text-blue-600 underline'>Greate</span></p>
+          <p className='text-shadow-amber-200'>Course by <span className='text-blue-600 underline'>{courseData.educator.name}</span></p>
          <div className='pt-8 text-gray-800'>
          <h2 className='text-xl font-semibold'>Course Structure</h2>
          <div className='pt-5'>
@@ -132,7 +172,7 @@ const CourseDetails = () => {
               <p>{calculateNoOfLectures(courseData)} lessons</p>
               </div>
             </div>
-            <button className='md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white cursor-pointer font-medium'>{isAlreadyEnrolled ? 'Already Enrolled' : 'Enroll Now' }</button>
+            <button onClick={enrollCourse} className='md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white cursor-pointer font-medium'>{isAlreadyEnrolled ? 'Already Enrolled' : 'Enroll Now' }</button>
             <div className='pt-6'>
               <p className='md:text-xl text-lg font-semibold text-gray-800'>What's in the course</p>
               <ul className='ml-4 pt-2 text-sm md:text-default list-disc text-gray-500'>

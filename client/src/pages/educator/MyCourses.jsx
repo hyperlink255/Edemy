@@ -1,17 +1,30 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../../context/AppContext'
 import Loading from '../../components/student/Loading'
+import instance from '../../utils/axiosInstance'
+import toast from 'react-hot-toast'
 
 const MyCourses = () => {
-  const {allCourses,currency} = useContext(AppContext)
+  const {isEducator,currency} = useContext(AppContext)
   const [courses,setCourses] = useState(null)
 
   const fetchEducatorCourses = async () => {
-    setCourses(allCourses)
+    try{
+     const res = await instance.get("/api/course/courses")
+     if(res.status === 200){
+      setCourses(res.data.course)
+     }
+    }catch(error){
+       toast.error(error.message)
+    }   
   }
+
   useEffect(() => {
-   fetchEducatorCourses()
-  },[])
+    if(isEducator){
+      fetchEducatorCourses()
+    }
+  },[isEducator])
+
   return  courses ? (
     <div className='h-screen flex flex-col items-start justify-between md:p-8 md:pb-0 p-4 pt-8 pb-0'>
       <div className='w-full'>

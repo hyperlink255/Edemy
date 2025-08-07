@@ -1,37 +1,75 @@
 import { useContext, useState } from "react";
 import { assets } from "../../assets/LMS_assets/assets/assets";
 import { AppContext } from "../../context/AppContext";
+import { toast } from 'react-hot-toast'
+import instance from '../../utils/axiosInstance'
+import { useNavigate } from "react-router-dom";
 
 export default function PopupForm() {
-    const { showModal, setShowModal } = useContext(AppContext)
+    const { showModal, setShowModal, setUser, setToken } = useContext(AppContext)
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         password: "",
-        image: null,
-    });
+        imageUrl: null,
+        educatorInviteToken: ""
 
-    // const [preview, setPreview] = useState(null);
+    });
+    const navigate = useNavigate()
+
     const [SignIn, setSignIn] = useState("SignIn")
 
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
-
-        if (name === "image") {
+        if (name === "imageUrl") {
             const file = files[0];
-            setFormData({ ...formData, image: file });
-            // setPreview(URL.createObjectURL(file));
+            setFormData({ ...formData, imageUrl: file });
         } else {
             setFormData({ ...formData, [name]: value });
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log(formData);
-        alert("Form Submitted!");
+        const formDataNew = new FormData();
+        formDataNew.append('name', formData.name);
+        formDataNew.append('password', formData.password);
+        formDataNew.append('email', formData.email);
+        formDataNew.append('imageUrl', formData.imageUrl);
+        formDataNew.append('educatorInviteToken', formData.educatorInviteToken);
+
+        try {
+            if (SignIn === "SignIn") {
+                const res = await instance.post('/api/user/register', formDataNew, {
+                      headers: { 'Content-Type': 'multipart/form-data' }
+
+                }); // ✅ FIXED
+                if (res.status === 200) {
+                    setUser(res.data.newData);
+                    setToken(res.data.token);
+                    toast.success(res.data.message);
+                    navigate("/"); 
+                
+                }
+            } else {
+                const res = await instance.post('/api/user/login', {
+                    email: formData.email,
+                    password: formData.password
+                });
+                if (res.status === 200) {
+                    setUser(res.data.newData);
+                    setToken(res.data.token);
+                    toast.success(res.data.message);
+                    navigate("/");
+                    setShowModal(false)
+                }
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.message);
+        }
     };
+
 
     return (
         <>
@@ -47,22 +85,22 @@ export default function PopupForm() {
                             </button>
 
                             <h2 className="text-2xl font-semibold mb-4 text-center">
-                                {SignIn === "SignIn"  ?  "Signup Form" : "Login Form"}
+                                {SignIn === "SignIn" ? "Signup Form" : "Login Form"}
                             </h2>
-                            <form className="space-y-4" onSubmit={handleSubmit}>
+                            <form className="space-y-4" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
                                 {SignIn === "SignIn" && (
-                                <div>
-                                    <label className="block mb-1 font-medium">Name</label>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        className="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400"
-                                        placeholder="Enter your name"
-                                        required
-                                    />
-                                </div>
+                                    <div>
+                                        <label className="block mb-1 font-medium">Name</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            className="w-full border rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-400"
+                                            placeholder="Enter your name"
+                                            required
+                                        />
+                                    </div>
                                 )}
 
                                 {/* Email Field */}
@@ -94,42 +132,56 @@ export default function PopupForm() {
                                 </div>
                                 {
                                     SignIn === "SignIn" && (
-                                <div>
-                                    <label className="block mb-1 font-medium">Upload Image</label>
-                                    <input
-                                        type="file"
-                                        name="image"
-                                        accept="image/*"
-                                        onChange={handleChange}
-                                        className="w-full border rounded-lg px-3 py-2"
-                                    />
-                                    {/* {preview && (
+                                        <div className="flex gap-2">
+                                            <div className="w-1/2">
+                                                <label className="block mb-1 font-medium">Upload Image</label>
+                                                <input
+                                                    type="file"
+                                                    name="imageUrl"
+                                                    accept="image/*"
+                                                    onChange={handleChange}
+                                                    className="w-full border rounded-lg px-3 py-2"
+                                                />
+                                            </div>
+                                            <div className="w-1/2">
+                                                <label className="block mb-1 font-medium">Admin</label>
+                                                <input
+                                                    type="text"
+                                                    name="educatorInviteToken"
+                                                    value={formData.educatorInviteToken}
+                                                    onChange={handleChange}
+                                                    className="w-full border rounded-lg px-3 py-2"
+                                                />
+                                            </div>
+
+
+                                            {/* {preview && (
                                         <img
                                             src={preview}
                                             alt="preview"
                                             className="mt-2 w-20 h-20 rounded-lg object-cover"
                                         />
                                     )} */}
-                                </div>
+                                        </div>
                                     )}
 
                                 <button
                                     type="submit"
                                     className="w-full bg-blue-500 text-white py-2 cursor-pointer rounded-lg hover:bg-blue-600 transition"
                                 >
-                                 {SignIn === "SignIn" ? "Register" : "Login"}
+                                    {SignIn === "SignIn" ? "Register" : "Login"}
                                 </button>
                                 <div className='w-full flex  text-sm mt-[-8px]'>
                                     <p className='cursor-pointer'>Forgot your password?</p>
                                     {
-                                    SignIn === "SignIn" ?
-                                     <>
-                                    <p onClick={() => setSignIn("SignUp")} className="text-blue-400 cursor-pointer">Create account</p>
-                                    </>
-                                    :
-                                    <>
-                                    <p onClick={() => setSignIn("SignIn")} className="text-blue-400 cursor-pointer">Login Here</p>
-                                    </>
+                                        SignIn === "SignIn" ?
+                                            <>
+                                                <p onClick={() => setSignIn("SignUp")} className="text-blue-400 cursor-pointer">Create account</p>
+                                            </>
+                                            :
+                                            <>
+                                                <p onClick={() => setSignIn("SignIn")} className="text-blue-400 cursor-pointer">Login Here</p>
+                                            </>
                                     }
                                 </div>
 
