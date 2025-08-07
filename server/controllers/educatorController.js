@@ -5,24 +5,30 @@ import User from "../models/userModel.js"
 
 
 export const addCourse = async (req, res) => {
-    try {
-          const {courseData} = req.body
-          const imageFile = req.file
-          const educatorId = req.user._id
-          if(!imageFile){
-            return res.json({success:false,message:'Thumbnail Not Attached'})
-          }
-          const parsedCourseData = await JSON.parse(courseData)
-          parsedCourseData.educator = educatorId
-          const newCourse = await Course.create(parsedCourseData)
-          const imageUpload = await Cloudinary.uploader.upload(imageFile.path)
-          newCourse.courseThumbnail = imageUpload.secure_url
-          await newCourse.save()
-          res.status(200).json({success:true,message:"Course Added"})
-    }catch(error){
-          res.json({success:false,message:error.message})
+  try {
+    const { courseData } = req.body;
+    const imageFile = req.file;
+    const educatorId = req.user._id;
+
+    if (!imageFile) {
+      return res.status(400).json({ success: false, message: 'Thumbnail Not Attached' });
     }
-}
+
+    const parsedCourseData = JSON.parse(courseData);
+
+    const imageUpload = await Cloudinary.uploader.upload(imageFile.path);
+
+    parsedCourseData.educator = educatorId;
+    parsedCourseData.courseThumbnail = imageUpload.secure_url;
+
+    await Course.create(parsedCourseData);
+
+    res.status(200).json({ success: true, message: "Course Added" });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 export const getEducatorCourses = async (req,res) => {
     try{
@@ -30,7 +36,7 @@ export const getEducatorCourses = async (req,res) => {
        const course = await Course.find({educator})
        res.status(200).json({success:true,course})
     }catch(error){
-       res.json({success:false,message:error.message})
+       res.status(500).json({success:false,message:error.message})
     }
 }
 
@@ -61,11 +67,11 @@ export const educatorDashbaordData = async (req,res) => {
                 })
              })
            } 
-           res.json({success:true,dashboard:{
+           res.status(200).json({success:true,dashboard:{
             totalEarnings,enrolledStudentsData,totalCourses
            }})
     }catch(error){
-         res.json({success:false,message:error.message})
+         res.status(500).json({success:false,message:error.message})
     }
 }
 
@@ -85,9 +91,9 @@ export const getEnrolledStudentsData = async (req,res) => {
             courseTitle:purchase.courseId.courseTitle,
             purchaseData : purchase.createdAt
          }));
-         res.json({success:true,enrolledStudents})
+         res.status(200).json({success:true,enrolledStudents})
     }catch(error){
-         res.json({success:false,message:error.message})
+         res.status(500).json({success:false,message:error.message})
 
     }
 }

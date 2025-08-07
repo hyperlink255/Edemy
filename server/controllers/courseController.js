@@ -5,9 +5,9 @@ export const getAllCourse = async (req,res) => {
     try{
        const courses = await Course.find({isPublished:true}).select(['-courseContent', '-enrolledStudents'])
        .populate({path:'educator'})
-       res.json({success:true,courses})
+       res.status(200).json({success:true,courses})
     }catch(error){
-        res.json({success:false,message:error.message})
+        res.status(500).json({success:false,message:error.message})
     }
 }
 export const getCourseId = async (req,res) => {
@@ -21,9 +21,9 @@ export const getCourseId = async (req,res) => {
             }
         })
      })
-     res.json({success:true,courseData})
+     res.status(200).json({success:true,courseData})
     }catch(error){
-     res.json({success:false,message:error.message})
+     res.status(500).json({success:false,message:error.message})
     }
 }
 

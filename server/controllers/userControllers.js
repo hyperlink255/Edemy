@@ -1,6 +1,5 @@
 import Stripe from "stripe";
 import User from "../models/userModel.js";
-import { stripeInstance } from '../index.js';
 
 import jwt from 'jsonwebtoken'
 import Purchase from "../models/purchaseModel.js";
@@ -71,14 +70,13 @@ export const login = async(req,res) => {
      res.status(500).json({success:false,message:error.message})
     }
 }
-
+ const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const stripeWebhooks = async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
 
   try {
-    // ✅ IMPORTANT: raw body use karna hai (isliye bodyParser.raw lagaya hai)
     event = stripeInstance.webhooks.constructEvent(
       req.body,
       sig,
